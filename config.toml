@@ -1,3 +1,5 @@
-baseURL = 'http://example.org/'
+baseURL = 'https://suzano.github.io/willschenk-hugo-bootstrap/'
 languageCode = 'en-us'
 title = 'My New Hugo Site'
+theme = 'mytheme'
+relativeURLs = true
