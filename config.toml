@@ -9,8 +9,16 @@ relativeURLs = true
     identifier = "about"
     name = "About"
     url = "/about/"
+    weight = 100
+
+  [[menu.main]]
+    identifier = "tags"
+    name = "Tags"
+    url = "/tags/"
+    weight = 110
 
   [[menu.main]]
     identifier = "posts"
     name = "Posts"
     url = "/posts/"
+    weight = 120

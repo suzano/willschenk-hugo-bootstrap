@@ -156,6 +156,160 @@ Há alguns conceitos novos aqui, o primeiro é `{{ "/" | relURL }}` que é uma f
 
 Também são declarações `if`, que estamos usando para determinar se incluímos a classe `active` no link. Observe onde está o operador, ou seja, `or` vem primeiro e os dados vêm depois. Tão límpido!
 
+## Adicionando conteúdo de postagem
+
+Vamos agora adicionar alguns posts básicos.
+```
+$ hugo new posts/sample_post.md
+```
+
+Se você não iniciou o hugo com -D, você precisará ter certeza de que o sinalizador de rascunho não é verdadeiro para que ele apareça.
+```
+---
+title: "Sample Post"
+date: 2018-10-19T16:04:51-04:00
+draft: false
+---
+
+One of the things I'm very interested in is writing words and seeing them on the page.
+```
+
+Isso é bastante padrão na maioria dos geradores de sites estáticos com a matéria da frente na parte superior e a remarcação na parte inferior.
+
+## Modelos de lista
+
+Crie uma visualização de modelo de lista em `themes/mytheme/layouts/_default/list.html`:
+```
+{{ define "main" }}
+<div class="container">
+  <h1 class="text-center">
+    {{ .Type | humanize }}
+  </h1>
+  {{ range .Pages }}
+    <div class="row mt-2">
+      <div class="d-none d-sm-block col-sm-2 mt-auto offset-sm-2 text-right">
+        <time class="post-date" datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" | safeHTML }}">{{ .Date.Format "Jan 2, 2006" }}</time>
+      </div>
+      <div class="col">
+        <a class="text-body" href="{{ .URL | relURL }}">{{ if .Draft }}DRAFT: {{end}}{{ .Title | markdownify }}</a>
+      </div>
+    </div>
+  {{ end }}
+</div>
+{{ end }}
+```
+
+Estamos usando uma função hugo humanize para capitalizar o tipo de objeto que estamos olhando e um monte de classes de utilitário bootstrap para alinhar e mostrar apenas a data publicada em telas maiores.
+
+A string `.Date.Format` de formato é realmente estranha – não tenho certeza se realmente a entendi, mas espera-se que o ano seja 2006 para que as coisas façam sentido. Isso é parte da maneira como o material de formatação de data de go subjacente do hugo funciona.
+
+Agora clicamos em postagens na barra de navegação, você deve ver a lista de postagens. Mas quando clicamos na própria página, você notará que temos o texto “This from the single page template”. Então vamos atualizar esse `themes/mytheme/layouts/_default/single.html` modelo agora:
+```
+{{ define "main" }}
+<div class="container">
+  <h1>{{ .Title | markdownify}}</h1>
+
+  {{ .Content }}
+</div>
+{{ end }}
+```
+
+## Adicionando tags
+
+Já que mencionamos as tags acima, vamos em frente e adicionar essa taxonomia ao nosso tema. Outro tipo comum de taxonomia são as categorias. Vamos em frente e adicionar isso ao `theme.toml`:
+```
+tags = ["tags"]
+```
+
+Reinicie seu servidor hugo para ver a mágica!
+
+Vamos adicionar algumas tags ao nosso primeiro arquivo `sample_post.md`:
+```
+---
+title: "Sample Post"
+date: 2018-10-19T16:10:36-04:00
+draft: false
+tags: [ "one", "two" ]
+---
+
+This is the first paragraph of what I'd like to say.
+```
+
+E depois crie outro post
+```
+$ hugo new posts/sample_post_the_second.md
+```
+
+E preencha com:
+```
+---
+title: "Sample Post The Second"
+date: 2018-10-19T16:54:29-04:00
+draft: false
+tags: ["two"]
+---
+
+This is the second amazing post that will *blow your mind*!
+```
+
+Novo permite adicionar tags ao nosso menu para que possamos colocá-lo na barra de navegação. Também especificaremos os pesos do menu para corrigir o pedido. Isso é feito na configuração do site `config.toml` onde estamos configurando como este site específico usou o tema que estamos definindo.
+```
+[menu]
+  [[menu.main]]
+    identifier = "about"
+    name = "About"
+    url = "/about/"
+    weight = 100
+
+  [[menu.main]]
+    identifier = "tags"
+    name = "Tags"
+    url = "/tags/"
+    weight = 110
+
+  [[menu.main]]
+    identifier = "posts"
+    name = "Posts"
+    url = "/posts/"
+    weight = 120
+```
+Finalmente, vamos adicionar alguma lógica ao nosso tema `theme/mytheme/partials/header.html`. Você pode substituir a coisa toda.
+```
+<nav class="navbar navbar-expand-lg navbar-light ">
+  <a class="navbar-brand" href="{{ "/" | relURL}}">{{.Site.Title}}</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav ml-auto">
+      {{ $currentPage := . }}
+      {{ range .Site.Menus.main }}
+        {{ if not (eq .Identifier "tags") }}
+          <li class="navbar-item {{if or ($currentPage.IsMenuCurrent "main" .) ($currentPage.HasMenuCurrent "main" .) }} active{{end}}">
+            <a class="nav-link" href="{{ .URL | relURL }}" title="{{ .Title }}">{{ .Name }}</a>
+          </li>
+        {{ else }}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="{{ .URL | relURL }}" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              {{ .Name }}
+            </a>
+            <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+              {{ range $name, $taxonomy := $currentPage.Site.Taxonomies.tags }}
+                {{ with $.Site.GetPage (printf "/tags/%s" $name) }}
+                  <a class="dropdown-item" href="{{ .URL | relURL }}">{{ $name }}</a>
+                {{ end }}
+              {{ end }}
+            </div>
+          </li>
+        {{ end }}
+      {{ end }}
+    </ul>
+  </div>
+</nav>
+```
+
+ERRO - <a class="dropdown-item" href="{{ relURL }}">{{ $name }}</a> no arquivo header.html
 
 ## Fonte
 https://willschenk.com/articles/2018/building-a-hugo-site/

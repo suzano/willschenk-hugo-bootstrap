@@ -1,5 +1,7 @@
 {{ define "main" }}
 <div class="container">
-  <p>This from the single page template</p>
+  <h1>{{ .Title | markdownify}}</h1>
+
+  {{ .Content }}
 </div>
 {{ end }}
