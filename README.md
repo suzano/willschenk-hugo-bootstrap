@@ -100,9 +100,61 @@ Agora vamos definir um único template básico, que será usado para renderizar 
 
 E saiu o primeiro rascunho do template `index.html` para o site. Vamos colocar um pequeno jumbotron em `themes/mytheme/layouts/index.html`:
 ```
-
+{{ define "main" }}
+<div class="jumbotron">
+  <div class="container">
+    <h1 class="display-4">This could be the title</h1>
+    <p class="lead">Here's some description stuff</p>
+    <p>There's also other things that are super nice</p>
+  </div>
+</div>
+{{ end }}
 ```
 
+Neste ponto, você deve ser capaz de ver a página de índice quando for para http://localhost:1313 (Se hugo não criou um header.html parcial vazio, a compilação pode falhar, então vá para a próxima seção se você não não tem isso.)
+
+## Cabeçalho e menus
+
+No `config.toml` nível superior do seu site (fora do tema) vamos definir alguns itens de menu. Em seguida, usaremos esses dados para preencher o cabeçalho.
+```
+[menu]
+  [[menu.main]]
+    identifier = "about"
+    name = "About"
+    url = "/about/"
+
+  [[menu.main]]
+    identifier = "posts"
+    name = "Posts"
+    url = "/posts/"
+```
+
+Em seguida, adicione um cabeçalho em `themes/mytheme/layouts/partials/header.html`. Vamos usar uma barra de navegação bootstrap e retirar os itens do menu da configuração do site.
+```
+<nav class="navbar navbar-expand-lg navbar-light ">
+  <a class="navbar-brand" href="{{ "/" | relURL}}">{{.Site.Title}}</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav ml-auto">
+      {{ $currentPage := . }}
+      {{ range .Site.Menus.main }}
+        <li class="navbar-item {{if or ($currentPage.IsMenuCurrent "main" .) ($currentPage.HasMenuCurrent "main" .) }} active{{end}}">
+          <a class="nav-link" href="{{ .URL }}" title="{{ .Title }}">{{ .Name }}</a>
+        </li>
+      {{ end }}
+    </ul>
+  </div>
+</nav>
+```
+
+Há alguns conceitos novos aqui, o primeiro é `{{ "/" | relURL }}` que é uma função auxiliar para transformar uma variável em algo que possa torná-la mais palatável para o usuário. Neste caso, estou apenas traduzindo `/` para um `relativeURL`, que em subpáginas terá algo como `../../index.html` ou qualquer outra coisa.
+
+`{{ $currentPage := . }}` está definindo uma variável, então vamos nos referir ao contexto externo quando estivermos `range` abaixo. Os `range` links sobre todos os itens do menu. O objeto que `.` se refere às alterações dentro do `range` para ser o item atual sobre o qual ele está iterando, portanto, para fazer comparações com o `currentPage` nesse caso, precisamos dar um nome a ele `:=` é muito golang.
+
+Também são declarações `if`, que estamos usando para determinar se incluímos a classe `active` no link. Observe onde está o operador, ou seja, `or` vem primeiro e os dados vêm depois. Tão límpido!
 
 
 ## Fonte
